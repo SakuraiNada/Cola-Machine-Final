@@ -33,7 +33,6 @@
                     @endforeach
                 </select>
             </div>
-
             <div class="form-group">
                 <label for="price">価格<span class="required">*</span></label>
                 <input type="text" name="price" id="price" value="{{ $product->price }}" required>
@@ -60,5 +59,6 @@
         <a href="{{ route('product.show', ['id' => $product->id]) }}" class="btn btn-blue">戻る</a>
     </div>
 @endsection
+
 
 

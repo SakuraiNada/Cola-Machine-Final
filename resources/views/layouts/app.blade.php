@@ -1,4 +1,5 @@
 <!doctype html>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">

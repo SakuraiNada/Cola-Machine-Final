@@ -11,7 +11,7 @@ class Product extends Model
     use HasFactory;
 
     protected $table = 'products';
-
+    protected $primaryKey = 'id';
     
     protected $fillable = [
         'product_name',
@@ -22,43 +22,38 @@ class Product extends Model
         'img_path',
     ];
 
-    public static $rules = [
-        'product_name' => 'required|string',
-        'company_id' => 'required|integer',
-        'price' => 'required|numeric',
-        'stock' => 'required|integer',
-        'comment' => 'nullable|string',
-        'img_path' => 'nullable|image',
-    ];
-
     public function company()
     {
         return $this->belongsTo(Company::class, 'company_id');
     }
 
-    public static function createProductWithTransaction($data)
+    public function createProductWithTransaction($data)
     {
-        return DB::transaction(function () use ($data) {
-            return self::create($data);
+        return \DB::transaction(function () use ($data) {
+            return $this->create($data);
         });
     }
 
-    public static function updateProductWithTransaction($id, $data)
+    public function updateProductWithTransaction($data)
     {
-        return DB::transaction(function () use ($id, $data) {
-            $product = self::find($id);
-            $product->update($data);
-            return $product;
+        return \DB::transaction(function () use ($data) {
+            $this->update($data);
+            return $this;
         });
     }
 
-    public static function deleteProductWithTransaction($id)
+    public function deleteProductWithTransaction()
     {
-        return DB::transaction(function () use ($id) {
-            $product = self::find($id);
-            $product->delete();
+        return \DB::transaction(function () {
+            $this->delete();
         });
     }
+
 }
+
+
+
+
+
 
 
