@@ -10,18 +10,18 @@
     <form action="{{ route('product.search') }}" method="GET">
         @csrf
         <div style="display: flex; gap: 50px;">
-            <input type="text" name="keyword" placeholder="検索キーワード" style="width: 150px;" autocomplete="off">
+            <input type="text" id="keyword" name="keyword" placeholder="検索キーワード" style="width: 150px;" autocomplete="off">
             <select name="company" id="company_id">
                 <option value="">メーカー名</option>
                 @foreach ($companies as $company)
                     <option value="{{ $company->id }}">{{ $company->company_name }}</option>
                 @endforeach
             </select>
-            <input type="number" name="price_min" placeholder="最低価格" style="width: 100px;">
-            <input type="number" name="price_max" placeholder="最高価格" style="width: 100px;">
-            <input type="number" name="stock_min" placeholder="最低在庫数" style="width: 100px;">
-            <input type="number" name="stock_max" placeholder="最高在庫数" style="width: 100px;">
-            <button type="submit" class="btn btn-primary" style="width: 150px;">検索</button>
+            <input type="number" id="price_min" name="price_min" placeholder="最低価格" style="width: 100px;">
+            <input type="number" id="price_max" name="price_max" placeholder="最高価格" style="width: 100px;">
+            <input type="number" id="stock_min" name="stock_min" placeholder="最低在庫数" style="width: 100px;">
+            <input type="number" id="stock_max" name="stock_max" placeholder="最高在庫数" style="width: 100px;">
+            <button type="button" id="searchBtn" class="btn btn-primary" style="width: 150px;">検索</button>
         </div>
     </form>
     <br>
@@ -41,7 +41,7 @@
         </th>
     </tr>
 </thead>
-<tbody>
+<tbody id="productList">
     @foreach($products as $product)
         <tr>
             <td>{{ $product->id }}</td>
@@ -65,107 +65,108 @@
     @endforeach
 </tbody>
         </table>
+        </div>
     </div>
     <script>
-$(document).ready(function() {
-    function updateSearchResults(sortField, sortOrder) {
-        var keyword = $('#keyword').val();
-        var company = $('#company_id').val();
-        var price_min = $('#price_min').val();
-        var price_max = $('#price_max').val();
-        var stock_min = $('#stock_min').val();
-        var stock_max = $('#stock_max').val();
+ function performSearch() {
+            var keyword = $('#keyword').val();
+            var company = $('#company_id').val();
+            var price_min = $('#price_min').val();
+            var price_max = $('#price_max').val();
+            var stock_min = $('#stock_min').val();
+            var stock_max = $('#stock_max').val();
 
-        $.ajax({
-            type: 'GET',
-            url: '{{ route('product.search') }}',
-            data: {
-                keyword: keyword,
-                company: company,
-                price_min: price_min,
-                price_max: price_max,
-                stock_min: stock_min,
-                stock_max: stock_max,
-                sort: sortField,
-                order: sortOrder
-            },
-            success: function(data) {
-                $('#searchResults').html(data);
-            }
-        });
-    }
-
-    function handleDeleteResponse(data, productRow) {
-        if (data.message) {
-            productRow.hide();
-            console.log('bad');
-        } else if (data.error) {
-            console.log('Error:', data.error);
+            $.ajax({
+                type: 'GET',
+                url: '{{ route('product.search') }}',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: {
+                    keyword: keyword,
+                    company: company,
+                    price_min: price_min,
+                    price_max: price_max,
+                    stock_min: stock_min,
+                    stock_max: stock_max
+                },
+                success: function(data) {
+                    $('#productList').html(data); // Update the product list content
+                    console.log('Search performed successfully');
+                },
+                error: function(xhr, status, error) {
+                    console.log('Error:', error);
+                }
+            });
         }
-    }
 
-    function purchaseProduct(productId) {
-        $.ajax({
-            type: 'POST',
-            url: '/purchase/' + productId, 
-            success: function(data) {
-                console.log('Purchase successful:', data.message);
-            },
-            error: function(xhr, status, error) {
-                console.log('Error:', error);
+        $(document).ready(function() {
+            $('#searchBtn').on('click', function(e) {
+                e.preventDefault();
+                performSearch();
+            });
+
+
+        function handleDeleteResponse(data, productRow) {
+            if (data.message) {
+                productRow.hide();
+                console.log('bad');
+            } else if (data.error) {
+                console.log('Error:', data.error);
             }
+        }
+
+        function purchaseProduct(productId) {
+            $.ajax({
+                type: 'POST',
+                url: '/purchase/' + productId, 
+                success: function(data) {
+                    console.log('Purchase successful:', data.message);
+                },
+                error: function(xhr, status, error) {
+                    console.log('Error:', error);
+                }
+            });
+        }
+
+        $('.sortable-column').on('click', function(e) {
+            e.preventDefault();
+            var sortField = $(this).data('sort-field');
+            var sortOrder = $(this).data('sort-order') === 'asc' ? 'desc' : 'asc';
+
+            updateSearchResults(sortField, sortOrder);
         });
-    }
 
-    $('.purchase-button').on('click', function(e) {
-        e.preventDefault();
-        var productId = $(this).data('product-id');
-        purchaseProduct(productId);
-    });
+        $('.delete-button').on('click', function(e) {
+            e.preventDefault();
+            var productId = $(this).data('product-id');
+            var productRow = $(this).parents('tr');
 
-    $('.sortable-column').on('click', function(e) {
-        e.preventDefault();
-        var sortField = $(this).data('sort-field');
-        var sortOrder = $(this).data('sort-order') === 'asc' ? 'desc' : 'asc';
-
-        updateSearchResults(sortField, sortOrder);
-    });
-
-    $('.delete-button').on('click',function(e) {
-        e.preventDefault();
-        var productId = $(this).data('product-id');
-        var productRow = $(this).parents('tr');
-
-        $.ajax({
-            type: 'POST',
-            data:{
-                    '_method':'DELETE'
+            $.ajax({
+                type: 'POST',
+                data: {
+                    '_method': 'DELETE'
                 },
                 headers: {
-        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-    },
-            url: 'products/async/' + productId,
-            success:function(data) {
-                handleDeleteResponse(data, productRow);
-                productRow.remove();
-                console.log('エラー');
-            },
-            error: function(xhr, status, error) {
-                console.log('Error:', error);
-            }
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                url: 'products/async/' + productId,
+                success: function(data) {
+                    handleDeleteResponse(data, productRow);
+                    productRow.remove();
+                    console.log('エラー');
+                },
+                error: function(xhr, status, error) {
+                    console.log('Error:', error);
+                }
+            });
         });
-    });
 
-    updateSearchResults();
-
-    $('#keyword, #company_id, #price_min, #price_max, #stock_min, #stock_max').on('input', function() {
-        updateSearchResults();
-    });
 });
+
 </script>
 
 @endsection
-
 
 
 
