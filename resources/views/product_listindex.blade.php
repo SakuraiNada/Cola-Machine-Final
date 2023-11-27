@@ -90,15 +90,17 @@
                     stock_min: stock_min,
                     stock_max: stock_max
                 },
-                success: function(data) {
-                    $('#productList').html(data); // Update the product list content
-                    console.log('Search performed successfully');
-                },
-                error: function(xhr, status, error) {
-                    console.log('Error:', error);
-                }
-            });
+        success: function(data) {
+            var extractedHTML = $(data).find('#productList').html();
+            $('#productList').html(extractedHTML);
+
+            console.log('Search performed successfully');
+        },
+        error: function(xhr, status, error) {
+            console.log('Error:', error);
         }
+    });
+}
 
         $(document).ready(function() {
             $('#searchBtn').on('click', function(e) {
@@ -116,18 +118,6 @@
             }
         }
 
-        function purchaseProduct(productId) {
-            $.ajax({
-                type: 'POST',
-                url: '/purchase/' + productId, 
-                success: function(data) {
-                    console.log('Purchase successful:', data.message);
-                },
-                error: function(xhr, status, error) {
-                    console.log('Error:', error);
-                }
-            });
-        }
 
         $('.sortable-column').on('click', function(e) {
             e.preventDefault();

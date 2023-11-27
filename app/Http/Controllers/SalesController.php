@@ -52,7 +52,7 @@ class SalesController extends Controller
     
             \DB::commit();
     
-            return response()->json(['message' => '購入出来ました']);
+            return response()->json(['message' => '購入出来ました!']);
         } catch (\Exception $e) {
             \DB::rollback();
             return response()->json(['error' => $e->getMessage()]);
